@@ -2,6 +2,7 @@ import { useState } from "react";
 import { diagnostics } from "../data/diagnostics";
 import PhotoUpload from "../components/PhotoUpload";
 
+
 const workflowLibrary = {
   compressorNotStarting: [
     {
@@ -2530,7 +2531,10 @@ ${estimate}
 
                     <p>
                       <strong>Expected Reading:</strong> {currentTest.expected}
+                      
                     </p>
+
+                    <WiringDiagram currentTest={currentTest} styles={styles} />
 
                     <input
                       value={reading}
