@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { diagnostics } from "../data/diagnostics";
-import PhotoUpload from "../components/PhotoUpload";
+import ServiceReportActions from "../components/ServiceReportActions";
+import EstimateBuilder from "../components/EstimateBuilder";
+import TruckStockChecklist from "../components/TruckStockChecklist";
+import ErrorCodeLibrary from "../components/ErrorCodeLibrary";
+import MaintenanceChecklist from "../components/MaintenanceChecklist";
+import DashboardStats from "../components/DashboardStats";
+import WelcomeBanner from "../components/WelcomeBanner";
 
 const workflowLibrary = {
   compressorNotStarting: [
@@ -893,14 +899,7 @@ const [reading, setReading] = useState("");
 const [workflowResult, setWorkflowResult] = useState("");
 const [apprenticeMode, setApprenticeMode] = useState(true);
 const [savedReports, setSavedReports] = useState([]);
-const [historySearch, setHistorySearch] = useState("");
-const [equipmentHistory, setEquipmentHistory] = useState([]);
 const [diagnosis, setDiagnosis] = useState(null);
-const [beforePhoto, setBeforePhoto] = useState(null);
-const [afterPhoto, setAfterPhoto] = useState(null);
-const [beforePreview, setBeforePreview] = useState("");
-const [afterPreview, setAfterPreview] = useState("");
-
 const [suggestedWorkflow, setSuggestedWorkflow] = useState("");
 const [refrigerantResult, setRefrigerantResult] = useState(null);
 const [maintenanceType, setMaintenanceType] = useState("coolingPM");
@@ -1016,26 +1015,6 @@ function getSuggestedWorkflow(symptomText) {
 
   function estimateTotal() {
     return estimateSubtotal() + estimateTax() - money(form.discount);
-  }
-
-  function handlePhotoUpload(e, type) {
-    const file = e.target.files[0];
-
-    if (!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (type === "before") {
-        setBeforePhoto(file);
-        setBeforePreview(reader.result);
-      } else {
-        setAfterPhoto(file);
-        setAfterPreview(reader.result);
-      }
-    };
-
-    reader.readAsDataURL(file);
   }
 
   function formatMoney(value) {
@@ -1450,9 +1429,6 @@ ${form.notes || "None"}
 ${estimate}
 `;
   }
-  
-
-  
 
   function copyServiceReport() {
     navigator.clipboard.writeText(createFullReportText());
@@ -1543,27 +1519,6 @@ ${estimate}
     setSavedReports(reports);
   }
 
-  function searchEquipmentHistory() {
-  const reports = JSON.parse(localStorage.getItem("hvacrReports")) || [];
-  const search = historySearch.toLowerCase().trim();
-
-  if (!search) {
-    alert("Enter a customer name, brand, model, or equipment type.");
-    return;
-  }
-
-  const matches = reports.filter((report) => {
-    return (
-      report.customerName?.toLowerCase().includes(search) ||
-      report.brand?.toLowerCase().includes(search) ||
-      report.modelNumber?.toLowerCase().includes(search) ||
-      report.equipmentType?.toLowerCase().includes(search)
-    );
-  });
-
-  setEquipmentHistory(matches);
-}
-
   function deleteReport(id) {
     const reports = JSON.parse(localStorage.getItem("hvacrReports")) || [];
     const updatedReports = reports.filter((report) => report.id !== id);
@@ -1626,7 +1581,6 @@ ${estimate}
     setAfterPreview(report.afterPhoto || "");
 
     alert("Report loaded successfully.");
-    
   }
 
   function autoSelectWorkflow(diagnosisTitle, symptom) {
@@ -2165,821 +2119,658 @@ ${estimate}
     setWorkflowResult("");
   }
 
-  function clearForm() {
-    setForm({
-      customerName: "",
-      equipmentType: "",
-      brand: "",
-      modelNumber: "",
-      refrigerant: "",
-      suctionPressure: "",
-      headPressure: "",
-      superheat: "",
-      subcooling: "",
-      ambientTemp: "",
-      symptom: "",
-      notes: "",
-      beforePhotoNotes: "",
-      afterPhotoNotes: "",
-      jobStatus: "New",
-      serviceFee: "",
-      laborHours: "",
-      hourlyRate: "",
-      partsCost: "",
-      taxPercent: "",
-      discount: "",
-      errorBrand: "Carrier",
-      errorCode: "33",
-    });
-
-    setDiagnosis(null);
-    setRefrigerantResult(null);
-    setSuggestedWorkflow("");
-    setWorkflowStep(0);
-    setReading("");
-    setWorkflowResult("");
-    setActiveTab("job");
-  }
-
-  function handlePhotoUpload(e, type) {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (type === "before") {
-        setBeforePreview(reader.result);
-      } else {
-        setAfterPreview(reader.result);
-      }
-    };
-
-  reader.readAsDataURL(file);
-}
-
   return (
-  <main style={styles.page}>
-    <section style={styles.container}>
-      <h1 style={styles.title}>HVAC/R Tech Assistant</h1>
+    <main style={styles.page}>
+      <section style={styles.container}>
+        <h1 style={styles.title}>HVAC/R Tech Assistant</h1>
 
-      <p style={styles.subtitle}>
-        Field diagnostics, apprentice guidance, reports, estimates, and invoices.
-      </p>
-
-      <div style={styles.formCard}>
-        <div style={styles.tabBar}>
-          <button
-            style={activeTab === "job" ? styles.activeTab : styles.tab}
-            onClick={() => setActiveTab("job")}
-          >
-            Job
-          </button>
-
-          <button
-            style={activeTab === "diagnosis" ? styles.activeTab : styles.tab}
-            onClick={() => setActiveTab("diagnosis")}
-          >
-            Diagnosis
-          </button>
-
-          <button
-            style={activeTab === "business" ? styles.activeTab : styles.tab}
-            onClick={() => setActiveTab("business")}
-          >
-            Business
-          </button>
-
-          <button
-            style={activeTab === "tools" ? styles.activeTab : styles.tab}
-            onClick={() => setActiveTab("tools")}
-          >
-            Tools
-          </button>
-
-          <button
-            style={activeTab === "training" ? styles.activeTab : styles.tab}
-            onClick={() => setActiveTab("training")}
-          >
-            Training
-          </button>
-
-          <button
-            style={activeTab === "reports" ? styles.activeTab : styles.tab}
-            onClick={() => setActiveTab("reports")}
-          >
-            Reports
-          </button>
+        <div style={{ background: "red", color: "white", padding: "20px", marginBottom: "20px" }}>
+          TEST DASHBOARD IS HERE
         </div>
+        <WelcomeBanner styles={styles} />
 
-        {activeTab === "job" && (
-          <>
-            <select
-              name="jobStatus"
-              style={styles.input}
-              value={form.jobStatus}
-              onChange={handleChange}
+        <p style={styles.subtitle}>
+          Field diagnostics, apprentice guidance, reports, estimates, and invoices.
+        </p>
+
+        <DashboardStats savedReports={savedReports} styles={styles} />
+
+        <div style={styles.formCard}>
+          <div style={styles.tabBar}>
+            <button
+              style={activeTab === "job" ? styles.activeTab : styles.tab}
+              onClick={() => setActiveTab("job")}
             >
-              <option value="New">New</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Waiting on Parts">Waiting on Parts</option>
-              <option value="Completed">Completed</option>
-              <option value="Needs Return Visit">Needs Return Visit</option>
-            </select>
-
-            <input
-              name="customerName"
-              placeholder="Customer Name"
-              style={styles.input}
-              value={form.customerName}
-              onChange={handleChange}
-            />
-
-            <select
-              name="equipmentType"
-              style={styles.input}
-              value={form.equipmentType}
-              onChange={handleChange}
-            >
-              <option value="">Select Equipment Type</option>
-              <option value="Residential AC">Residential AC</option>
-              <option value="Heat Pump">Heat Pump</option>
-              <option value="Gas Furnace">Gas Furnace</option>
-              <option value="Walk-In Cooler">Walk-In Cooler</option>
-              <option value="Walk-In Freezer">Walk-In Freezer</option>
-              <option value="Reach-In Refrigerator">Reach-In Refrigerator</option>
-              <option value="Ice Machine">Ice Machine</option>
-              <option value="Rooftop Unit">Rooftop Unit (RTU)</option>
-            </select>
-
-            <input
-              name="brand"
-              placeholder="Brand: Carrier, Trane, Lennox..."
-              style={styles.input}
-              value={form.brand}
-              onChange={handleChange}
-            />
-
-            <input
-              name="modelNumber"
-              placeholder="Model Number"
-              style={styles.input}
-              value={form.modelNumber}
-              onChange={handleChange}
-            />
-
-            <select
-              name="refrigerant"
-              style={styles.input}
-              value={form.refrigerant}
-              onChange={handleChange}
-            >
-              <option value="">Select Refrigerant Type</option>
-              <option value="R-410A">R-410A</option>
-              <option value="R-454B">R-454B</option>
-              <option value="R-32">R-32</option>
-              <option value="R-134a">R-134a</option>
-              <option value="R-404A">R-404A</option>
-              <option value="R-448A">R-448A</option>
-              <option value="R-449A">R-449A</option>
-            </select>
-
-            <input
-              name="suctionPressure"
-              placeholder="Suction Pressure (PSI)"
-              style={styles.input}
-              value={form.suctionPressure}
-              onChange={handleChange}
-            />
-
-            <input
-              name="headPressure"
-              placeholder="Head Pressure (PSI)"
-              style={styles.input}
-              value={form.headPressure}
-              onChange={handleChange}
-            />
-
-            <input
-              name="superheat"
-              placeholder="Superheat (°F)"
-              style={styles.input}
-              value={form.superheat}
-              onChange={handleChange}
-            />
-
-            <input
-              name="subcooling"
-              placeholder="Subcooling (°F)"
-              style={styles.input}
-              value={form.subcooling}
-              onChange={handleChange}
-            />
-
-            <input
-              name="ambientTemp"
-              placeholder="Ambient Temperature (°F)"
-              style={styles.input}
-              value={form.ambientTemp}
-              onChange={handleChange}
-            />
-
-            <textarea
-              name="symptom"
-              placeholder="Main Symptom: not cooling, high head pressure, compressor not starting..."
-              style={styles.textarea}
-              value={form.symptom}
-              onChange={handleChange}
-            />
-
-            {suggestedWorkflow && suggestedWorkflow !== selectedWorkflow && (
-              <div style={styles.suggestionBox}>
-                <strong>Suggested Workflow:</strong>{" "}
-                {workflowLabels[suggestedWorkflow]}
-                <button
-                  style={styles.smallButton}
-                  onClick={applySuggestedWorkflow}
-                >
-                  Use Suggested Workflow
-                </button>
-              </div>
-            )}
-
-            <PhotoUpload
-              beforePreview={beforePreview}
-              afterPreview={afterPreview}
-              handlePhotoUpload={handlePhotoUpload}
-              form={form}
-              handleChange={handleChange}
-              styles={styles}
-            />
-
-            <textarea
-              name="notes"
-              placeholder="Technician notes..."
-              style={styles.textarea}
-              value={form.notes}
-              onChange={handleChange}
-            />
-          </>
-        )}
-
-        {activeTab === "diagnosis" && (
-          <>
-            <select
-              style={styles.input}
-              value={selectedWorkflow}
-              onChange={(e) => {
-                setSelectedWorkflow(e.target.value);
-                setWorkflowStep(0);
-                setWorkflowResult("");
-                setReading("");
-              }}
-            >
-              {Object.keys(workflowLibrary).map((key) => (
-                <option key={key} value={key}>
-                  {workflowLabels[key]}
-                </option>
-              ))}
-            </select>
-
-            <button style={styles.button} onClick={generateDiagnosis}>
-              Generate Diagnosis
-            </button>
-
-            <button style={styles.secondaryButton} onClick={clearForm}>
-              Start New Job
+              Job
             </button>
 
             <button
-              style={styles.secondaryButton}
-              onClick={analyzeRefrigerantReadings}
+              style={activeTab === "diagnosis" ? styles.activeTab : styles.tab}
+              onClick={() => setActiveTab("diagnosis")}
             >
-              Analyze Refrigerant Readings
+              Diagnosis
             </button>
 
-            {refrigerantResult && (
-              <div style={styles.refrigerantBox}>
-                <h3>{refrigerantResult.title}</h3>
-                <p>{refrigerantResult.message}</p>
-              </div>
-            )}
-
-            {diagnosis && (
-              <div style={styles.resultCard}>
-                <h2>{diagnosis.title}</h2>
-
-                <div style={styles.confidenceCard}>
-                  Diagnostic Confidence: {getDiagnosticConfidence()}%
-                </div>
-
-                <h3 style={styles.sectionTitleTesting}>
-                  Interactive Troubleshooting
-                </h3>
-
-                {currentTest && (
-                  <div style={styles.workflowCard}>
-                    <h4>
-                      TEST {workflowStep + 1}: {currentTest.title}
-                    </h4>
-
-                    {apprenticeMode && (
-                      <>
-                        <div style={styles.customerBox}>
-                          <strong>Safety Notice</strong>
-                          <p>{currentTest.safety}</p>
-                        </div>
-
-                        <p>
-                          <strong>Why This Test Matters:</strong>{" "}
-                          {getTestWhy(currentTest)}
-                        </p>
-
-                        <p>
-                          <strong>Meter Setting:</strong> {currentTest.meter}
-                        </p>
-
-                        <p>
-                          <strong>Meter Dial Position:</strong>{" "}
-                          {currentTest.meterPosition}
-                        </p>
-
-                        <p>
-                          <strong>Why This Setting?</strong>{" "}
-                          {getMeterExplanation(currentTest.meter)}
-                        </p>
-
-                        <p>
-                          <strong>Lead Placement:</strong> {currentTest.leads}
-                        </p>
-
-                        <div style={styles.leadGrid}>
-                          {getLeadCards(currentTest.leads).map((lead, index) => (
-                            <div
-                              key={index}
-                              style={getLeadCardStyle(lead.type)}
-                            >
-                              <strong>{lead.label}</strong>
-                              <p>{lead.value}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-
-                    <p>
-                      <strong>Expected Reading:</strong> {currentTest.expected}
-                    </p>
-
-                    <input
-                      value={reading}
-                      onChange={(e) => setReading(e.target.value)}
-                      placeholder="Enter meter reading, for example 240, 24, 0, or OL"
-                      style={styles.input}
-                    />
-
-                    <div style={styles.workflowButtons}>
-                      <button
-                        style={styles.secondaryButton}
-                        onClick={previousWorkflowStep}
-                        disabled={workflowStep === 0}
-                      >
-                        Previous Test
-                      </button>
-
-                      <button style={styles.button} onClick={submitReading}>
-                        Submit Reading
-                      </button>
-
-                      <button
-                        style={styles.secondaryButton}
-                        onClick={nextWorkflowStep}
-                        disabled={workflowStep === currentWorkflow.length - 1}
-                      >
-                        Next Test
-                      </button>
-                    </div>
-
-                    {workflowResult && (
-                      <div style={getResultStyle(workflowResult)}>
-                        {workflowResult}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <h3 style={styles.sectionTitleCauses}>Likely Causes</h3>
-                <ul>
-                  {diagnosis.causes.map((item, index) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-
-                <h3 style={styles.sectionTitleTools}>Tools Needed</h3>
-                <ul>
-                  {diagnosis.tools.map((item, index) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-
-                <h3 style={styles.sectionTitleChecks}>Recommended Checks</h3>
-                <ul>
-                  {diagnosis.checks.map((item, index) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-
-                <h3 style={styles.sectionTitleTesting}>
-                  Step-by-Step Testing Guide
-                </h3>
-                <ul>
-                  {diagnosis.testingGuide?.map((step, index) => (
-                    <li key={index}>{step}</li>
-                  ))}
-                </ul>
-
-                <h3 style={styles.sectionTitleReadings}>Expected Readings</h3>
-                <ul>
-                  {diagnosis.expectedReadings?.map((item, index) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-
-                <h3 style={styles.sectionTitleRepairs}>
-                  Recommended Repair Actions
-                </h3>
-                <ul>
-                  {diagnosis.repairActions?.map((action, index) => (
-                    <li key={index}>{action}</li>
-                  ))}
-                </ul>
-
-                <h3 style={styles.sectionTitleTools}>
-                  Recommended Parts / Tools
-                </h3>
-                <ul>
-                  {getRecommendedParts(diagnosis.title).map((item, index) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-
-                <h3 style={styles.sectionTitleChecks}>Customer Explanation</h3>
-
-                <div style={styles.customerBox}>
-                  <p>
-                    The system shows signs of:{" "}
-                    <strong>{diagnosis.title}</strong>.
-                  </p>
-
-                  <p>{getCustomerExplanation(diagnosis.title)}</p>
-
-                  <p>Recommended next step: {diagnosis.checks[0]}</p>
-                </div>
-
-                <h3 style={styles.sectionTitleChecks}>Service Report Draft</h3>
-
-                <div style={styles.reportBox}>
-                  <p>
-                    <strong>Job Status:</strong> {form.jobStatus}
-                  </p>
-
-                  <p>
-                    <strong>Customer:</strong>{" "}
-                    {form.customerName || "Not provided"}
-                  </p>
-
-                  <p>
-                    <strong>Equipment:</strong>{" "}
-                    {form.equipmentType || "Not provided"}
-                  </p>
-
-                  <p>
-                    <strong>Brand:</strong> {form.brand || "Not provided"}
-                  </p>
-
-                  <p>
-                    <strong>Model:</strong>{" "}
-                    {form.modelNumber || "Not provided"}
-                  </p>
-
-                  <p>
-                    <strong>Refrigerant:</strong>{" "}
-                    {form.refrigerant || "Not provided"}
-                  </p>
-
-                  <p>
-                    <strong>Complaint:</strong>{" "}
-                    {form.symptom || "Not provided"}
-                  </p>
-
-                  <p>
-                    <strong>Diagnosis:</strong> {diagnosis.title}
-                  </p>
-
-                  <p>
-                    <strong>Invoice Total:</strong>{" "}
-                    {formatMoney(estimateTotal())}
-                  </p>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === "business" && (
-          <>
-            <div style={styles.toolPanel}>
-              <h3>Estimate Builder</h3>
-
-              <input
-                name="serviceFee"
-                placeholder="Service Fee"
-                style={styles.input}
-                value={form.serviceFee}
-                onChange={handleChange}
-              />
-
-              <input
-                name="laborHours"
-                placeholder="Labor Hours"
-                style={styles.input}
-                value={form.laborHours}
-                onChange={handleChange}
-              />
-
-              <input
-                name="hourlyRate"
-                placeholder="Hourly Rate"
-                style={styles.input}
-                value={form.hourlyRate}
-                onChange={handleChange}
-              />
-
-              <input
-                name="partsCost"
-                placeholder="Parts Cost"
-                style={styles.input}
-                value={form.partsCost}
-                onChange={handleChange}
-              />
-
-              <input
-                name="taxPercent"
-                placeholder="Tax %"
-                style={styles.input}
-                value={form.taxPercent}
-                onChange={handleChange}
-              />
-
-              <input
-                name="discount"
-                placeholder="Discount"
-                style={styles.input}
-                value={form.discount}
-                onChange={handleChange}
-              />
-
-              <div style={styles.invoiceBox}>
-                <p>Subtotal: {formatMoney(estimateSubtotal())}</p>
-                <p>Tax: {formatMoney(estimateTax())}</p>
-                <p>Discount: {formatMoney(form.discount)}</p>
-                <h3>Total: {formatMoney(estimateTotal())}</h3>
-              </div>
-            </div>
-
-            <button style={styles.secondaryButton} onClick={copyServiceReport}>
-              Copy Full Report
+            <button
+              style={activeTab === "business" ? styles.activeTab : styles.tab}
+              onClick={() => setActiveTab("business")}
+            >
+              Business
             </button>
 
-            <button style={styles.secondaryButton} onClick={copyInvoice}>
-              Copy Invoice
+            <button
+              style={activeTab === "tools" ? styles.activeTab : styles.tab}
+              onClick={() => setActiveTab("tools")}
+            >
+              Tools
             </button>
 
-            <button style={styles.secondaryButton} onClick={printFullReport}>
-              Print / Save Report as PDF
+            <button
+              style={activeTab === "training" ? styles.activeTab : styles.tab}
+              onClick={() => setActiveTab("training")}
+            >
+              Training
             </button>
 
-            <button style={styles.secondaryButton} onClick={printInvoice}>
-              Print / Save Invoice as PDF
+            <button
+              style={activeTab === "reports" ? styles.activeTab : styles.tab}
+              onClick={() => setActiveTab("reports")}
+            >
+              Reports
             </button>
+          </div>
 
-            <button style={styles.saveButton} onClick={saveReport}>
-              Save Report
-            </button>
-          </>
-        )}
-
-        {activeTab === "tools" && (
-          <>
-            <div style={styles.toolPanel}>
-              <h3>Error Code Library</h3>
-
+          {activeTab === "job" && (
+            <>
               <select
-                name="errorBrand"
+                name="jobStatus"
                 style={styles.input}
-                value={form.errorBrand}
+                value={form.jobStatus}
                 onChange={handleChange}
               >
-                {Object.keys(errorCodeLibrary).map((brand) => (
-                  <option key={brand} value={brand}>
-                    {brand}
-                  </option>
-                ))}
+                <option value="New">New</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Waiting on Parts">Waiting on Parts</option>
+                <option value="Completed">Completed</option>
+                <option value="Needs Return Visit">Needs Return Visit</option>
               </select>
 
-              <select
-                name="errorCode"
+              <input
+                name="customerName"
+                placeholder="Customer Name"
                 style={styles.input}
-                value={form.errorCode}
+                value={form.customerName}
+                onChange={handleChange}
+              />
+
+              <select
+                name="equipmentType"
+                style={styles.input}
+                value={form.equipmentType}
                 onChange={handleChange}
               >
-                {errorCodeLibrary[form.errorBrand].map((item) => (
-                  <option key={item.code} value={item.code}>
-                    {item.code}
-                  </option>
-                ))}
+                <option value="">Select Equipment Type</option>
+                <option value="Residential AC">Residential AC</option>
+                <option value="Heat Pump">Heat Pump</option>
+                <option value="Gas Furnace">Gas Furnace</option>
+                <option value="Walk-In Cooler">Walk-In Cooler</option>
+                <option value="Walk-In Freezer">Walk-In Freezer</option>
+                <option value="Reach-In Refrigerator">Reach-In Refrigerator</option>
+                <option value="Ice Machine">Ice Machine</option>
+                <option value="Rooftop Unit">Rooftop Unit (RTU)</option>
               </select>
 
-              {selectedError && (
-                <div style={styles.infoCard}>
-                  <p>
-                    <strong>Meaning:</strong> {selectedError.meaning}
-                  </p>
-                  <p>
-                    <strong>First Checks:</strong> {selectedError.checks}
-                  </p>
-                </div>
-              )}
-            </div>
+              <input
+                name="brand"
+                placeholder="Brand: Carrier, Trane, Lennox..."
+                style={styles.input}
+                value={form.brand}
+                onChange={handleChange}
+              />
 
-            <div style={styles.toolPanel}>
-              <h3>Truck Stock Checklist</h3>
-
-              {truckStockItems.map((item) => (
-                <label key={item} style={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={checkedTruckStock.includes(item)}
-                    onChange={() => toggleTruckStock(item)}
-                  />
-                  {item}
-                </label>
-              ))}
-            </div>
-
-            <div style={styles.toolPanel}>
-              <h3>Maintenance Checklist</h3>
+              <input
+                name="modelNumber"
+                placeholder="Model Number"
+                style={styles.input}
+                value={form.modelNumber}
+                onChange={handleChange}
+              />
 
               <select
+                name="refrigerant"
                 style={styles.input}
-                value={maintenanceType}
-                onChange={(e) => setMaintenanceType(e.target.value)}
+                value={form.refrigerant}
+                onChange={handleChange}
               >
-                <option value="coolingPM">Cooling PM</option>
-                <option value="heatingPM">Heating PM</option>
-                <option value="refrigerationPM">Refrigeration PM</option>
+                <option value="">Select Refrigerant Type</option>
+                <option value="R-410A">R-410A</option>
+                <option value="R-454B">R-454B</option>
+                <option value="R-32">R-32</option>
+                <option value="R-134a">R-134a</option>
+                <option value="R-404A">R-404A</option>
+                <option value="R-448A">R-448A</option>
+                <option value="R-449A">R-449A</option>
               </select>
 
-              <h4>{maintenanceLibrary[maintenanceType].title}</h4>
-
-              <ul>
-                {maintenanceLibrary[maintenanceType].items.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div style={styles.toolPanel}>
-              <h3>Refrigerant PT Reference</h3>
-
-              <p>
-                Selected refrigerant:{" "}
-                <strong>{form.refrigerant || "Not selected"}</strong>
-              </p>
-
-              {ptReference[form.refrigerant] ? (
-                <ul>
-                  {ptReference[form.refrigerant].map((row, index) => (
-                    <li key={index}>
-                      {row.temp}: {row.pressure}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>Select a supported refrigerant to view reference pressures.</p>
-              )}
-            </div>
-
-            <div style={styles.toolPanel}>
-              <h3>Parts Library</h3>
-
-              {partsLibrary.map((part) => (
-                <div key={part.name} style={styles.partCard}>
-                  <h4>{part.name}</h4>
-                  <p>
-                    <strong>Symptoms:</strong> {part.symptoms}
-                  </p>
-                  <p>
-                    <strong>Tests:</strong> {part.tests}
-                  </p>
-                  <p>
-                    <strong>Common Failure:</strong> {part.commonFailure}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {activeTab === "training" && (
-          <>
-            <label style={styles.checkboxLabel}>
               <input
-                type="checkbox"
-                checked={apprenticeMode}
-                onChange={(e) => setApprenticeMode(e.target.checked)}
+                name="suctionPressure"
+                placeholder="Suction Pressure (PSI)"
+                style={styles.input}
+                value={form.suctionPressure}
+                onChange={handleChange}
               />
-              Apprentice Mode
-            </label>
 
-            <button style={styles.secondaryButton} onClick={startQuiz}>
-              Start Apprentice Quiz
-            </button>
+              <input
+                name="headPressure"
+                placeholder="Head Pressure (PSI)"
+                style={styles.input}
+                value={form.headPressure}
+                onChange={handleChange}
+              />
 
-            {quizStarted && (
-              <div style={styles.quizBox}>
-                <h3>Apprentice Quiz Mode</h3>
-                <p>
-                  <strong>
-                    Question {quizIndex + 1} of {quizQuestions.length}
-                  </strong>
-                </p>
+              <input
+                name="superheat"
+                placeholder="Superheat (°F)"
+                style={styles.input}
+                value={form.superheat}
+                onChange={handleChange}
+              />
 
-                <p>{quizQuestions[quizIndex].question}</p>
+              <input
+                name="subcooling"
+                placeholder="Subcooling (°F)"
+                style={styles.input}
+                value={form.subcooling}
+                onChange={handleChange}
+              />
 
-                {quizQuestions[quizIndex].options.map((option) => (
-                  <label key={option} style={styles.quizOption}>
-                    <input
-                      type="radio"
-                      name="quizAnswer"
-                      value={option}
-                      checked={selectedQuizAnswer === option}
-                      onChange={(e) => setSelectedQuizAnswer(e.target.value)}
-                    />
-                    {option}
-                  </label>
-                ))}
+              <input
+                name="ambientTemp"
+                placeholder="Ambient Temperature (°F)"
+                style={styles.input}
+                value={form.ambientTemp}
+                onChange={handleChange}
+              />
 
-                <div style={styles.workflowButtons}>
-                  <button style={styles.button} onClick={submitQuizAnswer}>
-                    Submit Answer
-                  </button>
+              <textarea
+                name="symptom"
+                placeholder="Main Symptom: not cooling, high head pressure, compressor not starting..."
+                style={styles.textarea}
+                value={form.symptom}
+                onChange={handleChange}
+              />
 
+              {suggestedWorkflow && suggestedWorkflow !== selectedWorkflow && (
+                <div style={styles.suggestionBox}>
+                  <strong>Suggested Workflow:</strong>{" "}
+                  {workflowLabels[suggestedWorkflow]}
                   <button
-                    style={styles.secondaryButton}
-                    onClick={nextQuizQuestion}
+                    style={styles.smallButton}
+                    onClick={applySuggestedWorkflow}
                   >
-                    Next Question
+                    Use Suggested Workflow
                   </button>
                 </div>
+              )}
 
-                {quizFeedback && <div style={styles.infoCard}>{quizFeedback}</div>}
-
-                <p>
-                  <strong>Score:</strong> {quizScore} / {quizQuestions.length}
-                </p>
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === "reports" && (
-          <>
-            <button style={styles.secondaryButton} onClick={viewSavedReports}>
-              View Saved Reports
-            </button>
-
-            <div style={styles.reportBox}>
-              <h3>Customer Equipment History</h3>
-
-              <input
-                style={styles.input}
-                value={historySearch}
-                onChange={(e) => setHistorySearch(e.target.value)}
-                placeholder="Search by customer, brand, model, or equipment type"
+              <textarea
+                name="beforePhotoNotes"
+                placeholder="Before Photo Notes: what did you see before repair?"
+                style={styles.textarea}
+                value={form.beforePhotoNotes}
+                onChange={handleChange}
               />
 
-              <button style={styles.button} onClick={searchEquipmentHistory}>
-                Search History
+              <textarea
+                name="afterPhotoNotes"
+                placeholder="After Photo Notes: what changed after repair?"
+                style={styles.textarea}
+                value={form.afterPhotoNotes}
+                onChange={handleChange}
+              />
+
+              <textarea
+                name="notes"
+                placeholder="Technician notes..."
+                style={styles.textarea}
+                value={form.notes}
+                onChange={handleChange}
+              />
+            </>
+          )}
+
+          {activeTab === "diagnosis" && (
+            <>
+              <select
+                style={styles.input}
+                value={selectedWorkflow}
+                onChange={(e) => {
+                  setSelectedWorkflow(e.target.value);
+                  setWorkflowStep(0);
+                  setWorkflowResult("");
+                  setReading("");
+                }}
+              >
+                {Object.keys(workflowLibrary).map((key) => (
+                  <option key={key} value={key}>
+                    {workflowLabels[key]}
+                  </option>
+                ))}
+              </select>
+
+              <button style={styles.button} onClick={generateDiagnosis}>
+                Generate Diagnosis
               </button>
 
-              {equipmentHistory.length > 0 && (
-                <div style={styles.historyBox}>
-                  {equipmentHistory.map((report) => (
+              <button
+                style={styles.secondaryButton}
+                onClick={analyzeRefrigerantReadings}
+              >
+                Analyze Refrigerant Readings
+              </button>
+
+              {refrigerantResult && (
+                <div style={styles.refrigerantBox}>
+                  <h3>{refrigerantResult.title}</h3>
+                  <p>{refrigerantResult.message}</p>
+                </div>
+              )}
+
+              {diagnosis && (
+                <div style={styles.resultCard}>
+                  <h2>{diagnosis.title}</h2>
+
+                  <div style={styles.confidenceCard}>
+                    Diagnostic Confidence: {getDiagnosticConfidence()}%
+                  </div>
+
+                  <h3 style={styles.sectionTitleTesting}>
+                    Interactive Troubleshooting
+                  </h3>
+
+                  {currentTest && (
+                    <div style={styles.workflowCard}>
+                      <h4>
+                        TEST {workflowStep + 1}: {currentTest.title}
+                      </h4>
+
+                      {apprenticeMode && (
+                        <>
+                          <div style={styles.customerBox}>
+                            <strong>Safety Notice</strong>
+                            <p>{currentTest.safety}</p>
+                          </div>
+
+                          <p>
+                            <strong>Why This Test Matters:</strong>{" "}
+                            {getTestWhy(currentTest)}
+                          </p>
+
+                          <p>
+                            <strong>Meter Setting:</strong> {currentTest.meter}
+                          </p>
+
+                          <p>
+                            <strong>Meter Dial Position:</strong>{" "}
+                            {currentTest.meterPosition}
+                          </p>
+
+                          <p>
+                            <strong>Why This Setting?</strong>{" "}
+                            {getMeterExplanation(currentTest.meter)}
+                          </p>
+
+                          <p>
+                            <strong>Lead Placement:</strong> {currentTest.leads}
+                          </p>
+
+                          <div style={styles.leadGrid}>
+                            {getLeadCards(currentTest.leads).map((lead, index) => (
+                              <div
+                                key={index}
+                                style={getLeadCardStyle(lead.type)}
+                              >
+                                <strong>{lead.label}</strong>
+                                <p>{lead.value}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      <p>
+                        <strong>Expected Reading:</strong> {currentTest.expected}
+                      </p>
+
+                      <input
+                        value={reading}
+                        onChange={(e) => setReading(e.target.value)}
+                        placeholder="Enter meter reading, for example 240, 24, 0, or OL"
+                        style={styles.input}
+                      />
+
+                      <div style={styles.workflowButtons}>
+                        <button
+                          style={styles.secondaryButton}
+                          onClick={previousWorkflowStep}
+                          disabled={workflowStep === 0}
+                        >
+                          Previous Test
+                        </button>
+
+                        <button style={styles.button} onClick={submitReading}>
+                          Submit Reading
+                        </button>
+
+                        <button
+                          style={styles.secondaryButton}
+                          onClick={nextWorkflowStep}
+                          disabled={workflowStep === currentWorkflow.length - 1}
+                        >
+                          Next Test
+                        </button>
+                      </div>
+
+                      {workflowResult && (
+                        <div style={getResultStyle(workflowResult)}>
+                          {workflowResult}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <h3 style={styles.sectionTitleCauses}>Likely Causes</h3>
+                  <ul>
+                    {diagnosis.causes.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+
+                  <h3 style={styles.sectionTitleTools}>Tools Needed</h3>
+                  <ul>
+                    {diagnosis.tools.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+
+                  <h3 style={styles.sectionTitleChecks}>Recommended Checks</h3>
+                  <ul>
+                    {diagnosis.checks.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+
+                  <h3 style={styles.sectionTitleTesting}>
+                    Step-by-Step Testing Guide
+                  </h3>
+                  <ul>
+                    {diagnosis.testingGuide?.map((step, index) => (
+                      <li key={index}>{step}</li>
+                    ))}
+                  </ul>
+
+                  <h3 style={styles.sectionTitleReadings}>Expected Readings</h3>
+                  <ul>
+                    {diagnosis.expectedReadings?.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+
+                  <h3 style={styles.sectionTitleRepairs}>
+                    Recommended Repair Actions
+                  </h3>
+                  <ul>
+                    {diagnosis.repairActions?.map((action, index) => (
+                      <li key={index}>{action}</li>
+                    ))}
+                  </ul>
+
+                  <h3 style={styles.sectionTitleTools}>
+                    Recommended Parts / Tools
+                  </h3>
+                  <ul>
+                    {getRecommendedParts(diagnosis.title).map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+
+                  <h3 style={styles.sectionTitleChecks}>Customer Explanation</h3>
+
+                  <div style={styles.customerBox}>
+                    <p>
+                      The system shows signs of:{" "}
+                      <strong>{diagnosis.title}</strong>.
+                    </p>
+
+                    <p>{getCustomerExplanation(diagnosis.title)}</p>
+
+                    <p>Recommended next step: {diagnosis.checks[0]}</p>
+                  </div>
+
+                  <h3 style={styles.sectionTitleChecks}>Service Report Draft</h3>
+
+                  <div style={styles.reportBox}>
+                    <p>
+                      <strong>Job Status:</strong> {form.jobStatus}
+                    </p>
+
+                    <p>
+                      <strong>Customer:</strong>{" "}
+                      {form.customerName || "Not provided"}
+                    </p>
+
+                    <p>
+                      <strong>Equipment:</strong>{" "}
+                      {form.equipmentType || "Not provided"}
+                    </p>
+
+                    <p>
+                      <strong>Brand:</strong> {form.brand || "Not provided"}
+                    </p>
+
+                    <p>
+                      <strong>Model:</strong>{" "}
+                      {form.modelNumber || "Not provided"}
+                    </p>
+
+                    <p>
+                      <strong>Refrigerant:</strong>{" "}
+                      {form.refrigerant || "Not provided"}
+                    </p>
+
+                    <p>
+                      <strong>Complaint:</strong>{" "}
+                      {form.symptom || "Not provided"}
+                    </p>
+
+                    <p>
+                      <strong>Diagnosis:</strong> {diagnosis.title}
+                    </p>
+
+                    <p>
+                      <strong>Invoice Total:</strong>{" "}
+                      {formatMoney(estimateTotal())}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === "business" && (
+            <>              
+              <EstimateBuilder
+                form={form}
+                handleChange={handleChange}
+                estimateSubtotal={estimateSubtotal}
+                estimateTax={estimateTax}
+                estimateTotal={estimateTotal}
+                formatMoney={formatMoney}
+                styles={styles}
+              />
+            
+              <ServiceReportActions
+                copyServiceReport={copyServiceReport}
+                copyInvoice={copyInvoice}
+                printFullReport={printFullReport}
+                printInvoice={printInvoice}
+                saveReport={saveReport}
+                styles={styles}
+              />
+            </>
+          )}
+
+          {activeTab === "tools" && (
+            <>
+              <ErrorCodeLibrary
+                errorCodeLibrary={errorCodeLibrary}
+                selectedError={selectedError}
+                form={form}
+                handleChange={handleChange}
+                styles={styles}
+              />
+
+              <TruckStockChecklist
+                truckStockItems={truckStockItems}
+                checkedTruckStock={checkedTruckStock}
+                toggleTruckStock={toggleTruckStock}
+                styles={styles}
+              />
+              <MaintenanceChecklist
+                maintenanceLibrary={maintenanceLibrary}
+                maintenanceType={maintenanceType}
+                setMaintenanceType={setMaintenanceType}
+                styles={styles}
+              />
+
+              <div style={styles.toolPanel}>
+                <h3>Refrigerant PT Reference</h3>
+
+                <p>
+                  Selected refrigerant:{" "}
+                  <strong>{form.refrigerant || "Not selected"}</strong>
+                </p>
+
+                {ptReference[form.refrigerant] ? (
+                  <ul>
+                    {ptReference[form.refrigerant].map((row, index) => (
+                      <li key={index}>
+                        {row.temp}: {row.pressure}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>Select a supported refrigerant to view reference pressures.</p>
+                )}
+              </div>
+
+              <div style={styles.toolPanel}>
+                <h3>Parts Library</h3>
+
+                {partsLibrary.map((part) => (
+                  <div key={part.name} style={styles.partCard}>
+                    <h4>{part.name}</h4>
+                    <p>
+                      <strong>Symptoms:</strong> {part.symptoms}
+                    </p>
+                    <p>
+                      <strong>Tests:</strong> {part.tests}
+                    </p>
+                    <p>
+                      <strong>Common Failure:</strong> {part.commonFailure}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {activeTab === "training" && (
+            <>
+              <label style={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={apprenticeMode}
+                  onChange={(e) => setApprenticeMode(e.target.checked)}
+                />
+                Apprentice Mode
+              </label>
+
+              <button style={styles.secondaryButton} onClick={startQuiz}>
+                Start Apprentice Quiz
+              </button>
+
+              {quizStarted && (
+                <div style={styles.quizBox}>
+                  <h3>Apprentice Quiz Mode</h3>
+                  <p>
+                    <strong>
+                      Question {quizIndex + 1} of {quizQuestions.length}
+                    </strong>
+                  </p>
+
+                  <p>{quizQuestions[quizIndex].question}</p>
+
+                  {quizQuestions[quizIndex].options.map((option) => (
+                    <label key={option} style={styles.quizOption}>
+                      <input
+                        type="radio"
+                        name="quizAnswer"
+                        value={option}
+                        checked={selectedQuizAnswer === option}
+                        onChange={(e) => setSelectedQuizAnswer(e.target.value)}
+                      />
+                      {option}
+                    </label>
+                  ))}
+
+                  <div style={styles.workflowButtons}>
+                    <button style={styles.button} onClick={submitQuizAnswer}>
+                      Submit Answer
+                    </button>
+
+                    <button
+                      style={styles.secondaryButton}
+                      onClick={nextQuizQuestion}
+                    >
+                      Next Question
+                    </button>
+                  </div>
+
+                  {quizFeedback && <div style={styles.infoCard}>{quizFeedback}</div>}
+
+                  <p>
+                    <strong>Score:</strong> {quizScore} / {quizQuestions.length}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === "reports" && (
+            <>
+              <button style={styles.secondaryButton} onClick={viewSavedReports}>
+                View Saved Reports
+              </button>
+
+              {savedReports.length > 0 && (
+                <div style={styles.savedReportsBox}>
+                  <div style={styles.savedReportsHeader}>
+                    <h2>Saved Reports</h2>
+
+                    <button style={styles.deleteButton} onClick={deleteAllReports}>
+                      Delete All
+                    </button>
+                  </div>
+
+                  {savedReports.map((report) => (
                     <div key={report.id} style={styles.savedReportCard}>
                       <p>
                         <strong>Date:</strong> {report.date}
+                      </p>
+
+                      <p>
+                        <strong>Status:</strong> {report.jobStatus}
                       </p>
 
                       <p>
@@ -2991,8 +2782,11 @@ ${estimate}
                       </p>
 
                       <p>
-                        <strong>Brand / Model:</strong> {report.brand}{" "}
-                        {report.modelNumber}
+                        <strong>Brand:</strong> {report.brand}
+                      </p>
+
+                      <p>
+                        <strong>Model:</strong> {report.modelNumber}
                       </p>
 
                       <p>
@@ -3000,100 +2794,61 @@ ${estimate}
                       </p>
 
                       <p>
-                        <strong>Job Status:</strong> {report.jobStatus}
+                        <strong>Total:</strong> ${report.estimateTotal}
                       </p>
 
-                      <p>
-                        <strong>Total:</strong> $
-                        {report.estimateTotal || "0.00"}
-                      </p>
+                      {report.beforePhoto && (
+                        <>
+                          <h4>Before Repair Photo</h4>
+                          <img
+                            src={report.beforePhoto}
+                            alt="Before Repair"
+                            style={styles.savedPhoto}
+                          />
+                        </>
+                      )}
+
+                      {report.afterPhoto && (
+                        <>
+                          <h4>After Repair Photo</h4>
+                          <img
+                            src={report.afterPhoto}
+                            alt="After Repair"
+                            style={styles.savedPhoto}
+                          />
+                        </>
+                      )}
 
                       <button
                         style={styles.openButton}
                         onClick={() => reopenReport(report)}
                       >
-                        Open This Visit
+                        Open Report
+                      </button>
+
+                      <button
+                        style={styles.deleteButton}
+                        onClick={() => deleteReport(report.id)}
+                      >
+                        Delete Report
                       </button>
                     </div>
                   ))}
                 </div>
               )}
-
-              {historySearch && equipmentHistory.length === 0 && (
-                <p style={styles.mutedText}>
-                  No history found yet for this search.
-                </p>
-              )}
-            </div>
-
-            {savedReports.length > 0 && (
-              <div style={styles.savedReportsBox}>
-                <div style={styles.savedReportsHeader}>
-                  <h2>Saved Reports</h2>
-
-                  <button style={styles.deleteButton} onClick={deleteAllReports}>
-                    Delete All
-                  </button>
-                </div>
-
-                {savedReports.map((report) => (
-                  <div key={report.id} style={styles.savedReportCard}>
-                    <p>
-                      <strong>Date:</strong> {report.date}
-                    </p>
-
-                    <p>
-                      <strong>Status:</strong> {report.jobStatus}
-                    </p>
-
-                    <p>
-                      <strong>Customer:</strong> {report.customerName}
-                    </p>
-
-                    <p>
-                      <strong>Equipment:</strong> {report.equipmentType}
-                    </p>
-
-                    <p>
-                      <strong>Brand:</strong> {report.brand}
-                    </p>
-
-                    <p>
-                      <strong>Model:</strong> {report.modelNumber}
-                    </p>
-
-                    <p>
-                      <strong>Diagnosis:</strong> {report.diagnosisTitle}
-                    </p>
-
-                    <p>
-                      <strong>Total:</strong> ${report.estimateTotal}
-                    </p>
-
-                    <button
-                      style={styles.openButton}
-                      onClick={() => reopenReport(report)}
-                    >
-                      Open Report
-                    </button>
-
-                    <button
-                      style={styles.deleteButton}
-                      onClick={() => deleteReport(report.id)}
-                    >
-                      Delete Report
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </section>
-  </main>
-);
-}
+            </>
+          )}
+        </div>
+            <footer style={styles.footer}>
+              <p>
+                © {new Date().getFullYear()} HVAC/R Tech Assistant. Built to help
+                technicians diagnose faster, train smarter, and serve customers better.
+              </p>
+            </footer>
+          </section>
+        </main>
+      );
+    }
 
 const styles = {
   page: {
@@ -3139,6 +2894,14 @@ const styles = {
     cursor: "pointer",
     fontWeight: "bold",
   },
+  footer: {
+    marginTop: "30px",
+    paddingTop: "20px",
+    borderTop: "1px solid #334155",
+    color: "#94a3b8",
+    fontSize: "14px",
+    textAlign: "center",
+  },
   secondaryButton: {
     background: "transparent",
     color: "white",
@@ -3159,16 +2922,6 @@ const styles = {
     cursor: "pointer",
     marginLeft: "10px",
     marginTop: "8px",
-  },
-  historyBox: {
-    marginTop: "15px",
-    display: "grid",
-    gap: "15px",
-  },
-
-  mutedText: {
-    color: "#94a3b8",
-    fontSize: "14px",
   },
   saveButton: {
     background: "#f97316",
@@ -3234,6 +2987,27 @@ const styles = {
     borderRadius: "10px",
     fontWeight: "bold",
     cursor: "pointer",
+  },
+  welcomeBanner: {
+    background: "linear-gradient(135deg,#0f172a,#1e3a8a)",
+    color: "#fff",
+    padding: "22px",
+    borderRadius: "16px",
+    marginBottom: "24px",
+    boxShadow: "0 8px 24px rgba(0,0,0,.25)",
+  },
+  dashboardGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+    gap: "14px",
+    marginBottom: "22px",
+  },
+  statCard: {
+    background: "#020617",
+    border: "1px solid #334155",
+    borderRadius: "14px",
+    padding: "16px",
+    textAlign: "center",
   },
   passCard: {
     marginTop: "15px",
@@ -3487,23 +3261,5 @@ const styles = {
     fontWeight: "700",
     borderBottom: "2px solid #f97316",
     paddingBottom: "6px",
-  },
-  photoPreview: {
-    width: "100%",
-    maxWidth: "360px",
-    borderRadius: "12px",
-    marginTop: "10px",
-    marginBottom: "16px",
-    border: "1px solid #475569",
-    objectFit: "cover",
-  },
-  savedPhoto: {
-    width: "100%",
-    maxWidth: "260px",
-    borderRadius: "10px",
-    marginTop: "8px",
-    marginBottom: "12px",
-    border: "1px solid #475569",
-    objectFit: "cover",
   },
 };
